@@ -155,3 +155,15 @@ create table if not exists insights_daily (
   primary key (campaign_id, day, channel));
 alter table insights_daily enable row level security;
 drop policy if exists ins_sel on insights_daily; create policy ins_sel on insights_daily for select using (is_member(business_id) or is_admin());
+
+-- ============================================================================================
+-- Stage 4 · Post studio (saved posts). Card/mini-site details live in businesses.settings.card;
+-- the public card page reads its data from the share link, so no public table is needed.
+-- ============================================================================================
+create table if not exists posts (
+  id text primary key default gen_random_uuid()::text,
+  business_id uuid not null references businesses on delete cascade,
+  festival_date date not null, name text not null, caption text check (char_length(caption) <= 2000), template text,
+  created_at timestamptz not null default now());
+alter table posts enable row level security;
+drop policy if exists posts_all on posts; create policy posts_all on posts for all using (is_member(business_id) or is_admin()) with check (is_member(business_id));
