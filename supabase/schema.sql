@@ -114,3 +114,44 @@ create index if not exists campaigns_biz on campaigns(business_id, created_at de
 alter table campaigns enable row level security;
 drop policy if exists camp_all on campaigns;
 create policy camp_all on campaigns for all using (is_member(business_id) or is_admin()) with check (is_member(business_id));
+
+-- ============================================================================================
+-- Stage 3 · Leads CRM, notes, notifications (additive, safe to re-run)
+-- ============================================================================================
+create table if not exists leads (
+  id text primary key default gen_random_uuid()::text,
+  business_id uuid not null references businesses on delete cascade,
+  campaign_id text references campaigns on delete set null,
+  name text not null check (char_length(name) between 1 and 120),
+  phone text not null check (phone ~ '^\+[0-9]{10,15}$'),
+  email text, message text check (char_length(message) <= 1000), channel text,
+  status text not null default 'new' check (status in ('new','contacted','qualified','won','lost')),
+  example boolean not null default false,
+  created_at timestamptz not null default now(), updated_at timestamptz);
+create index if not exists leads_biz on leads(business_id, created_at desc);
+create table if not exists lead_notes (
+  id text primary key default gen_random_uuid()::text,
+  business_id uuid not null references businesses on delete cascade,
+  lead_id text not null references leads on delete cascade,
+  text text not null check (char_length(text) between 1 and 1000),
+  created_by uuid default auth.uid(), created_at timestamptz not null default now());
+create table if not exists notifications (
+  id text primary key default gen_random_uuid()::text,
+  business_id uuid not null references businesses on delete cascade,
+  kind text not null check (kind in ('lead','campaign','billing','tip')),
+  title text not null check (char_length(title) <= 200), body text, href text, read boolean not null default false,
+  created_at timestamptz not null default now());
+create index if not exists notifications_biz on notifications(business_id, created_at desc);
+alter table leads enable row level security;
+alter table lead_notes enable row level security;
+alter table notifications enable row level security;
+drop policy if exists leads_all on leads; create policy leads_all on leads for all using (is_member(business_id) or is_admin()) with check (is_member(business_id));
+drop policy if exists notes_all on lead_notes; create policy notes_all on lead_notes for all using (is_member(business_id) or is_admin()) with check (is_member(business_id));
+drop policy if exists notif_all on notifications; create policy notif_all on notifications for all using (is_member(business_id)) with check (is_member(business_id));
+-- Insights for live campaigns (filled by a sync job once real publishing is connected; simulated campaigns compute in the app).
+create table if not exists insights_daily (
+  business_id uuid not null references businesses on delete cascade, campaign_id text not null references campaigns on delete cascade,
+  day date not null, channel text not null, impressions int default 0, reach int default 0, clicks int default 0, results int default 0, spend numeric(12,2) default 0,
+  primary key (campaign_id, day, channel));
+alter table insights_daily enable row level security;
+drop policy if exists ins_sel on insights_daily; create policy ins_sel on insights_daily for select using (is_member(business_id) or is_admin());
