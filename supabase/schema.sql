@@ -93,3 +93,24 @@ drop policy if exists a_sel on audit_log; create policy a_sel on audit_log for s
 
 -- Make yourself admin after first sign-in (run once, with your email):
 -- update profiles set is_admin = true where id = (select id from auth.users where email = 'you@example.com');
+
+-- ============================================================================================
+-- Stage 2 · Campaigns (additive, safe to re-run). Ids are text so client-generated ids work.
+-- ============================================================================================
+create table if not exists campaigns (
+  id text primary key default gen_random_uuid()::text,
+  business_id uuid not null references businesses on delete cascade,
+  name text not null check (char_length(name) between 1 and 120),
+  objective text not null check (objective in ('leads','calls','messages','traffic','awareness','installs')),
+  channels jsonb not null default '[]'::jsonb,
+  daily_budget integer not null check (daily_budget between 100 and 500000),
+  duration_days integer not null check (duration_days between 1 and 90),
+  start_date date not null default current_date,
+  status text not null default 'draft' check (status in ('draft','active','paused','ended','failed')),
+  creative jsonb not null default '{}'::jsonb, copy jsonb not null default '{}'::jsonb, audience jsonb not null default '{}'::jsonb,
+  publish jsonb, sim_days integer not null default 0, target_cpl integer, applied jsonb default '[]'::jsonb,
+  created_at timestamptz not null default now(), updated_at timestamptz);
+create index if not exists campaigns_biz on campaigns(business_id, created_at desc);
+alter table campaigns enable row level security;
+drop policy if exists camp_all on campaigns;
+create policy camp_all on campaigns for all using (is_member(business_id) or is_admin()) with check (is_member(business_id));

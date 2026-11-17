@@ -5,7 +5,7 @@ import { db } from '@/lib/data';
 import { useSession } from '@/components/useSession';
 import { CATEGORIES, GOALS, BRAND_COLORS, Business } from '@/lib/types';
 import { req, phoneOk, normPhone, clean } from '@/lib/validate';
-import { Logo } from '@/components/Logo';
+import { AuthLayout } from '@/components/AuthLayout';
 
 export default function Onboarding() {
   const r = useRouter(); const { ready, biz } = useSession();
@@ -27,9 +27,8 @@ export default function Onboarding() {
   }
   if (!ready) return <div className="auth-wrap"><div className="skel" style={{ width: 320, height: 220 }} /></div>;
   const E = (k: string) => err[k] && <span className="err">{err[k]}</span>;
-  return (<div className="auth-wrap"><div className="auth-card" style={{ width: 'min(520px,100%)' }}>
-    <div style={{ marginBottom: 24 }}><Logo /></div>
-    <div className="card">
+  return (<AuthLayout img={['owner-interior', 'owner-clinic', 'owner-shop'][step]} title={['Tell us about your business.', 'How customers reach you.', 'Pick a goal and a budget.'][step]} points={['Takes about two minutes', 'Change anything later in Settings', 'No card needed to start']}>
+    <div className="card" style={{ width: 'min(520px,100%)' }}>
       <div className="steps">{[0, 1, 2].map(i => <span key={i} className={i <= step ? 'on' : ''} />)}</div>
       {step === 0 && (<><h2 style={{ fontSize: 24 }}>About your business</h2><p className="muted small">This shapes your ad suggestions.</p>
         <div className="field"><label htmlFor="n">Business name</label><input id="n" className="input" value={f.name} onChange={e => set('name', e.target.value)} />{E('name')}</div>
@@ -49,5 +48,5 @@ export default function Onboarding() {
         {step < 2 ? <button className="btn btn-primary" onClick={() => check(step) && setStep(step + 1)}>Continue</button>
           : <button className="btn btn-primary" onClick={finish} disabled={busy}>{busy ? 'Saving…' : 'Finish setup'}</button>}
       </div>
-    </div></div></div>);
+    </div></AuthLayout>);
 }

@@ -1,10 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/data';
 import { emailOk } from '@/lib/validate';
-import { Logo } from '@/components/Logo';
+import { AuthLayout } from '@/components/AuthLayout';
 
 export default function Login() {
   const r = useRouter();
@@ -19,8 +18,7 @@ export default function Login() {
     catch (x: any) { setErr(x?.message || 'Could not sign in. Try again.'); } finally { setBusy(false); }
   }
   async function google() { setErr(''); try { await db().signInGoogle(); if (db().mode === 'demo') r.replace('/onboarding/'); } catch (x: any) { setErr(x?.message || 'Google sign-in is not set up yet.'); } }
-  return (<div className="auth-wrap"><div className="auth-card">
-    <Link href="/" style={{ display: 'inline-block', marginBottom: 28 }}><Logo /></Link>
+  return (<AuthLayout>
     <div className="card">
       {sent ? (<><h2 style={{ fontSize: 24 }}>Check your inbox</h2><p className="muted">We sent a sign-in link to <strong>{email}</strong>. Open it on this device to continue.</p>
         <button className="btn btn-ghost" onClick={() => setSent(false)}>Use a different email</button></>) : (<>
@@ -35,5 +33,5 @@ export default function Login() {
         <button className="btn btn-ghost" style={{ width: '100%' }} onClick={google}>Continue with Google</button></>)}
     </div>
     {mode === 'demo' && <p className="small muted" style={{ marginTop: 14, textAlign: 'center' }}><span className="demo-pill">Demo mode</span> No backend connected. Data stays in this browser.</p>}
-  </div></div>);
+  </AuthLayout>);
 }
