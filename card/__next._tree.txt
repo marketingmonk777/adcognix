@@ -1,0 +1,5 @@
+:HL["/adcognix/_next/static/chunks/1y9wpaypozfvv.css","style"]
+:HC["/",""]
+2:[["children",{"s":"__PAGE__","h":160}]]
+1:[["children",{"s":"card","h":96,"c":"$Q2"}]]
+0:{"b":"rbzwxtGmMahL19XouVImg","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
